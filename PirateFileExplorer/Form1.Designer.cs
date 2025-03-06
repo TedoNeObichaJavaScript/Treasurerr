@@ -49,6 +49,7 @@
             treeView1.Name = "treeView1";
             treeView1.Size = new Size(226, 699);
             treeView1.TabIndex = 0;
+            treeView1.BeforeExpand += treeView1_BeforeExpand;
             treeView1.AfterSelect += treeView1_AfterSelect;
             // 
             // listView1
