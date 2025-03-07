@@ -40,28 +40,29 @@
             btnZip = new Button();
             btnUnzip = new Button();
             panel1 = new Panel();
+            btnSelectFile = new Button();
             panel1.SuspendLayout();
             SuspendLayout();
             // 
             // treeView1
             // 
             treeView1.BackColor = Color.BurlyWood;
-            treeView1.Dock = DockStyle.Left;
-            treeView1.Location = new Point(0, 0);
+            treeView1.Location = new Point(0, 33);
             treeView1.Name = "treeView1";
-            treeView1.Size = new Size(226, 625);
+            treeView1.Size = new Size(361, 592);
             treeView1.TabIndex = 0;
             treeView1.BeforeExpand += treeView1_BeforeExpand;
             treeView1.AfterSelect += treeView1_AfterSelect;
             // 
             // listView1
             // 
-            listView1.BackColor = Color.LightYellow;
+            listView1.BackColor = Color.Bisque;
             listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1 });
             listView1.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            listView1.Location = new Point(242, 41);
+            listView1.GridLines = true;
+            listView1.Location = new Point(385, 41);
             listView1.Name = "listView1";
-            listView1.Size = new Size(237, 504);
+            listView1.Size = new Size(324, 572);
             listView1.TabIndex = 1;
             listView1.UseCompatibleStateImageBehavior = false;
             listView1.View = View.Details;
@@ -75,19 +76,19 @@
             // txtSearch
             // 
             txtSearch.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            txtSearch.Location = new Point(35, 3);
+            txtSearch.Location = new Point(830, 5);
             txtSearch.Name = "txtSearch";
             txtSearch.PlaceholderText = "Search for files..";
-            txtSearch.Size = new Size(752, 24);
+            txtSearch.Size = new Size(346, 24);
             txtSearch.TabIndex = 2;
             txtSearch.TextChanged += txtSearch_TextChanged;
             // 
             // btnSearch
             // 
             btnSearch.Font = new Font("Comic Sans MS", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnSearch.Location = new Point(784, 3);
+            btnSearch.Location = new Point(1172, 5);
             btnSearch.Name = "btnSearch";
-            btnSearch.Size = new Size(75, 23);
+            btnSearch.Size = new Size(74, 24);
             btnSearch.TabIndex = 3;
             btnSearch.Text = "🔎 Search";
             btnSearch.UseVisualStyleBackColor = true;
@@ -97,7 +98,7 @@
             // 
             btnDelete.BackColor = Color.Transparent;
             btnDelete.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnDelete.Location = new Point(242, 551);
+            btnDelete.Location = new Point(242, 4);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(75, 23);
             btnDelete.TabIndex = 4;
@@ -108,7 +109,7 @@
             // btnCopy
             // 
             btnCopy.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnCopy.Location = new Point(323, 551);
+            btnCopy.Location = new Point(161, 4);
             btnCopy.Name = "btnCopy";
             btnCopy.Size = new Size(75, 23);
             btnCopy.TabIndex = 5;
@@ -119,7 +120,7 @@
             // btnMove
             // 
             btnMove.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnMove.Location = new Point(404, 551);
+            btnMove.Location = new Point(80, 4);
             btnMove.Name = "btnMove";
             btnMove.Size = new Size(75, 23);
             btnMove.TabIndex = 6;
@@ -130,7 +131,7 @@
             // btnZip
             // 
             btnZip.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnZip.Location = new Point(282, 580);
+            btnZip.Location = new Point(323, 4);
             btnZip.Name = "btnZip";
             btnZip.Size = new Size(75, 23);
             btnZip.TabIndex = 7;
@@ -141,7 +142,7 @@
             // btnUnzip
             // 
             btnUnzip.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnUnzip.Location = new Point(375, 580);
+            btnUnzip.Location = new Point(404, 4);
             btnUnzip.Name = "btnUnzip";
             btnUnzip.Size = new Size(75, 23);
             btnUnzip.TabIndex = 8;
@@ -151,14 +152,30 @@
             // 
             // panel1
             // 
+            panel1.Controls.Add(btnSelectFile);
             panel1.Controls.Add(txtSearch);
+            panel1.Controls.Add(btnUnzip);
             panel1.Controls.Add(btnSearch);
+            panel1.Controls.Add(btnMove);
+            panel1.Controls.Add(btnZip);
+            panel1.Controls.Add(btnCopy);
+            panel1.Controls.Add(btnDelete);
             panel1.Dock = DockStyle.Top;
-            panel1.Location = new Point(226, 0);
+            panel1.Location = new Point(0, 0);
             panel1.Name = "panel1";
-            panel1.Size = new Size(896, 35);
+            panel1.Size = new Size(1258, 35);
             panel1.TabIndex = 9;
             panel1.Paint += panel1_Paint;
+            // 
+            // btnSelectFile
+            // 
+            btnSelectFile.Location = new Point(3, 4);
+            btnSelectFile.Name = "btnSelectFile";
+            btnSelectFile.Size = new Size(75, 23);
+            btnSelectFile.TabIndex = 9;
+            btnSelectFile.Text = "Select File";
+            btnSelectFile.UseVisualStyleBackColor = true;
+            btnSelectFile.Click += btnSelectFile_Click;
             // 
             // Form1
             // 
@@ -167,13 +184,8 @@
             BackColor = Color.FromArgb(92, 64, 51);
             BackgroundImage = (Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = ImageLayout.Stretch;
-            ClientSize = new Size(1122, 625);
+            ClientSize = new Size(1258, 676);
             Controls.Add(panel1);
-            Controls.Add(btnUnzip);
-            Controls.Add(btnZip);
-            Controls.Add(btnMove);
-            Controls.Add(btnCopy);
-            Controls.Add(btnDelete);
             Controls.Add(listView1);
             Controls.Add(treeView1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -198,5 +210,6 @@
         private Button btnZip;
         private Button btnUnzip;
         private Panel panel1;
+        private Button btnSelectFile;
     }
 }

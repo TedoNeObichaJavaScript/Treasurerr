@@ -15,12 +15,22 @@ namespace PirateFileExplorer
         private ImageList imageList1;
         // Cache to store file extension to ImageList index mapping
         private Dictionary<string, int> extIconCache = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        // Current directory tracker for navigation and search
+        private string currentDirectory = "";
 
         public Form1()
         {
             InitializeComponent();
             InitializeImageList();
             LoadDrives();
+
+            // Subscribe to drag-and-drop events for TreeView and ListView
+            treeView1.ItemDrag += treeView1_ItemDrag;
+            listView1.DragEnter += listView1_DragEnter;
+            listView1.DragDrop += listView1_DragDrop;
+
+            // Subscribe to the double-click event for ListView
+            listView1.DoubleClick += listView1_DoubleClick;
         }
 
         // ----------------------------------------------------------------
@@ -39,13 +49,22 @@ namespace PirateFileExplorer
         private void LoadDrives()
         {
             treeView1.Nodes.Clear();
-
-            foreach (var drive in DriveInfo.GetDrives())
+            try
             {
-                // Create a node for each drive (e.g., "C:\")
-                TreeNode node = new TreeNode(drive.Name) { Tag = drive.Name };
-                node.Nodes.Add("Loading...");
-                treeView1.Nodes.Add(node);
+                foreach (var drive in DriveInfo.GetDrives())
+                {
+                    if (drive.IsReady)
+                    {
+                        // Create a node for each drive (e.g., "C:\")
+                        TreeNode node = new TreeNode(drive.Name) { Tag = drive.Name };
+                        node.Nodes.Add("Loading...");
+                        treeView1.Nodes.Add(node);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading drives: {ex.Message}");
             }
         }
 
@@ -61,7 +80,7 @@ namespace PirateFileExplorer
                 {
                     // Create a node with temporary text
                     TreeNode node = new TreeNode($"{Path.GetFileName(dir)} (Calculating...)") { Tag = dir };
-                    node.Nodes.Add("Loading...");  // dummy node for further expansion
+                    node.Nodes.Add("Loading...");  // Dummy node for further expansion
                     e.Node.Nodes.Add(node);
 
                     // Calculate folder size asynchronously to keep UI responsive
@@ -70,15 +89,9 @@ namespace PirateFileExplorer
                     node.Text = $"{Path.GetFileName(dir)} ({sizeText})";
                 }
             }
-            catch
-            {
-                // Optionally handle errors (e.g., access denied)
-            }
+            catch { }
         }
 
-        // ----------------------------------------------------------------
-        // 2. LOAD FILES IN LISTVIEW WHEN A FOLDER IS SELECTED
-        // ----------------------------------------------------------------
         private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
         {
             string selectedPath = e.Node.Tag.ToString();
@@ -88,29 +101,34 @@ namespace PirateFileExplorer
             }
         }
 
+        // ----------------------------------------------------------------
+        // 2. LOAD FILES AND FOLDERS IN LISTVIEW
+        // ----------------------------------------------------------------
         private void LoadFiles(string path)
         {
             listView1.Items.Clear();
             extIconCache.Clear(); // Optionally clear cache when loading a new folder
+            currentDirectory = path; // Update current directory
 
             try
             {
-                long totalSize = 0;
-                string[] files = Directory.GetFiles(path);
-
-                foreach (var file in files)
+                // Load folders first
+                foreach (var dir in Directory.GetDirectories(path))
                 {
-                    FileInfo fi = new FileInfo(file);
-                    totalSize += fi.Length;
-
-                    ListViewItem item = new ListViewItem(Path.GetFileName(file));
-                    item.Tag = file;
-                    item.ImageIndex = GetFileIconIndex(file);
+                    ListViewItem item = new ListViewItem(Path.GetFileName(dir), GetFileIconIndex(dir));
+                    item.Tag = dir;
+                    item.SubItems.Add("Folder");
                     listView1.Items.Add(item);
                 }
-                // Optionally, update status (e.g., a TextBox or StatusStrip) with the folder path and file stats.
-                // Example: txtCurrentPath.Text = path;
-                // Example: toolStripStatusLabel1.Text = $"Files: {files.Length}, Total Size: {FormatBytes(totalSize)}";
+                // Load files
+                foreach (var file in Directory.GetFiles(path))
+                {
+                    FileInfo fi = new FileInfo(file);
+                    ListViewItem item = new ListViewItem(Path.GetFileName(file), GetFileIconIndex(file));
+                    item.Tag = file;
+                    item.SubItems.Add(FormatBytes(fi.Length));
+                    listView1.Items.Add(item);
+                }
             }
             catch (Exception ex)
             {
@@ -143,11 +161,9 @@ namespace PirateFileExplorer
 
             try
             {
-                // Get all files (non-recursive search)
                 var files = Directory.GetFiles(currentPath, "*", SearchOption.TopDirectoryOnly);
                 var matchedFiles = new List<Tuple<string, int>>();
 
-                // Calculate similarity using Levenshtein distance for each file name that contains the query
                 foreach (var file in files)
                 {
                     string fileName = Path.GetFileName(file).ToLower();
@@ -158,15 +174,13 @@ namespace PirateFileExplorer
                     }
                 }
 
-                // Order files by distance (closer match = lower distance)
                 var ordered = matchedFiles.OrderBy(t => t.Item2).ToList();
 
                 foreach (var tuple in ordered)
                 {
                     string file = tuple.Item1;
-                    ListViewItem item = new ListViewItem(Path.GetFileName(file));
+                    ListViewItem item = new ListViewItem(Path.GetFileName(file), GetFileIconIndex(file));
                     item.Tag = file;
-                    item.ImageIndex = GetFileIconIndex(file);
                     listView1.Items.Add(item);
                 }
 
@@ -429,61 +443,47 @@ namespace PirateFileExplorer
         }
 
         // ----------------------------------------------------------------
-        // 6. DRAG & DROP FROM LISTVIEW TO TREEVIEW
+        // 6. DRAG & DROP: FROM TREEVIEW TO LISTVIEW (Load Folder Contents)
         // ----------------------------------------------------------------
-        private void listView1_ItemDrag(object sender, ItemDragEventArgs e)
+        private void treeView1_ItemDrag(object sender, ItemDragEventArgs e)
         {
-            List<string> files = new List<string>();
-            foreach (ListViewItem item in listView1.SelectedItems)
+            TreeNode draggedNode = (TreeNode)e.Item;
+            if (draggedNode.Tag != null && Directory.Exists(draggedNode.Tag.ToString()))
             {
-                files.Add(item.Tag.ToString());
-            }
-            if (files.Count > 0)
-            {
-                DoDragDrop(new DataObject(DataFormats.FileDrop, files.ToArray()), DragDropEffects.Move);
+                DoDragDrop(new DataObject(DataFormats.FileDrop, new string[] { draggedNode.Tag.ToString() }),
+                           DragDropEffects.Copy);
             }
         }
 
-        private void treeView1_DragEnter(object sender, DragEventArgs e)
+        private void listView1_DragEnter(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
-                e.Effect = DragDropEffects.Move;
+                e.Effect = DragDropEffects.Copy;
             else
                 e.Effect = DragDropEffects.None;
         }
 
-        private void treeView1_DragDrop(object sender, DragEventArgs e)
+        private void listView1_DragDrop(object sender, DragEventArgs e)
         {
-            TreeView tv = (TreeView)sender;
-            Point pt = tv.PointToClient(new Point(e.X, e.Y));
-            TreeNode targetNode = tv.GetNodeAt(pt);
-
-            if (targetNode == null) return;
-
-            string targetPath = targetNode.Tag.ToString();
-
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                foreach (string file in files)
+                string[] droppedPaths = (string[])e.Data.GetData(DataFormats.FileDrop);
+                foreach (string path in droppedPaths)
                 {
-                    try
+                    if (Directory.Exists(path))
                     {
-                        string fileName = Path.GetFileName(file);
-                        string destPath = Path.Combine(targetPath, fileName);
-                        File.Move(file, destPath);
+                        LoadFiles(path);
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        MessageBox.Show($"Error moving file: {ex.Message}");
+                        MessageBox.Show("Only folders can be dropped here.", "Invalid Drop", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 }
             }
-            // Optionally refresh the views
         }
 
         // ----------------------------------------------------------------
-        // 7. HELPER METHODS (FOLDER SIZE, FORMAT BYTES, GET FILE ICON)
+        // 7. HELPER METHODS: FOLDER SIZE, FORMAT BYTES, GET FILE ICON
         // ----------------------------------------------------------------
         private long GetFolderSize(string folderPath)
         {
@@ -519,10 +519,23 @@ namespace PirateFileExplorer
             return $"{bytes} bytes";
         }
 
-        // Retrieves the icon index for a file, using caching to avoid duplicate extractions.
-        private int GetFileIconIndex(string filePath)
+        // Retrieves the icon index for a file or folder using caching.
+        private int GetFileIconIndex(string path)
         {
-            string ext = Path.GetExtension(filePath);
+            // Check if path is a folder.
+            if (Directory.Exists(path))
+            {
+                if (!extIconCache.ContainsKey("folder"))
+                {
+                    // Use a placeholder folder icon; you can replace this with a custom icon.
+                    imageList1.Images.Add(SystemIcons.WinLogo);
+                    extIconCache["folder"] = imageList1.Images.Count - 1;
+                }
+                return extIconCache["folder"];
+            }
+
+            // Otherwise, it's a file. Use its extension as the key.
+            string ext = Path.GetExtension(path);
             if (extIconCache.ContainsKey(ext))
             {
                 return extIconCache[ext];
@@ -531,7 +544,7 @@ namespace PirateFileExplorer
             {
                 try
                 {
-                    Icon icon = Icon.ExtractAssociatedIcon(filePath);
+                    Icon icon = Icon.ExtractAssociatedIcon(path);
                     if (icon != null)
                     {
                         Bitmap bmp = icon.ToBitmap();
@@ -547,11 +560,60 @@ namespace PirateFileExplorer
         }
 
         // ----------------------------------------------------------------
+        // LISTVIEW DOUBLE-CLICK EVENT: OPEN FOLDER OR FILE
+        // ----------------------------------------------------------------
+        private void listView1_DoubleClick(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count > 0)
+            {
+                string selectedPath = listView1.SelectedItems[0].Tag.ToString();
+                if (Directory.Exists(selectedPath))
+                {
+                    // If a folder is double-clicked, load its contents.
+                    LoadFiles(selectedPath);
+                }
+                else if (File.Exists(selectedPath))
+                {
+                    // If a file is double-clicked, open it with its default application.
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
+                    {
+                        FileName = selectedPath,
+                        UseShellExecute = true
+                    });
+                }
+            }
+        }
+
+        // ----------------------------------------------------------------
         // FORM EVENTS (Placeholders for additional handling)
         // ----------------------------------------------------------------
-        private void Form1_Load(object sender, EventArgs e) { }
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            // Any additional initialization
+        }
         private void txtSearch_TextChanged(object sender, EventArgs e) { }
         private void listView1_SelectedIndexChanged(object sender, EventArgs e) { }
         private void panel1_Paint(object sender, PaintEventArgs e) { }
+
+        // ----------------------------------------------------------------
+        // OPTIONAL: Button to select files (if needed)
+        // ----------------------------------------------------------------
+        private void btnSelectFile_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "All Files (*.*)|*.*";
+                openFileDialog.InitialDirectory = "C:\\";
+                openFileDialog.Multiselect = true;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    foreach (var file in openFileDialog.FileNames)
+                    {
+                        MessageBox.Show($"File Selected: {file}");
+                    }
+                }
+            }
+        }
     }
 }
