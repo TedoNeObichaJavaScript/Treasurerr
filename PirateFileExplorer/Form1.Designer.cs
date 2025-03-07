@@ -32,13 +32,15 @@
             treeView1 = new TreeView();
             listView1 = new ListView();
             columnHeader1 = new ColumnHeader();
-            textBox1 = new TextBox();
-            button1 = new Button();
+            txtSearch = new TextBox();
+            btnSearch = new Button();
             btnDelete = new Button();
             btnCopy = new Button();
             btnMove = new Button();
             btnZip = new Button();
             btnUnzip = new Button();
+            panel1 = new Panel();
+            panel1.SuspendLayout();
             SuspendLayout();
             // 
             // treeView1
@@ -47,7 +49,7 @@
             treeView1.Dock = DockStyle.Left;
             treeView1.Location = new Point(0, 0);
             treeView1.Name = "treeView1";
-            treeView1.Size = new Size(226, 699);
+            treeView1.Size = new Size(226, 625);
             treeView1.TabIndex = 0;
             treeView1.BeforeExpand += treeView1_BeforeExpand;
             treeView1.AfterSelect += treeView1_AfterSelect;
@@ -56,6 +58,7 @@
             // 
             listView1.BackColor = Color.LightYellow;
             listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1 });
+            listView1.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
             listView1.Location = new Point(242, 41);
             listView1.Name = "listView1";
             listView1.Size = new Size(237, 504);
@@ -69,24 +72,26 @@
             columnHeader1.Text = "Treasurer";
             columnHeader1.Width = 250;
             // 
-            // textBox1
+            // txtSearch
             // 
-            textBox1.Location = new Point(232, 12);
-            textBox1.Name = "textBox1";
-            textBox1.PlaceholderText = "Search for files..";
-            textBox1.Size = new Size(218, 23);
-            textBox1.TabIndex = 2;
-            textBox1.TextChanged += textBox1_TextChanged;
+            txtSearch.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
+            txtSearch.Location = new Point(35, 3);
+            txtSearch.Name = "txtSearch";
+            txtSearch.PlaceholderText = "Search for files..";
+            txtSearch.Size = new Size(752, 24);
+            txtSearch.TabIndex = 2;
+            txtSearch.TextChanged += txtSearch_TextChanged;
             // 
-            // button1
+            // btnSearch
             // 
-            button1.Location = new Point(446, 12);
-            button1.Name = "button1";
-            button1.Size = new Size(75, 23);
-            button1.TabIndex = 3;
-            button1.Text = "🔎 Search";
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
+            btnSearch.Font = new Font("Comic Sans MS", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 204);
+            btnSearch.Location = new Point(784, 3);
+            btnSearch.Name = "btnSearch";
+            btnSearch.Size = new Size(75, 23);
+            btnSearch.TabIndex = 3;
+            btnSearch.Text = "🔎 Search";
+            btnSearch.UseVisualStyleBackColor = true;
+            btnSearch.Click += btnSearch_Click;
             // 
             // btnDelete
             // 
@@ -98,7 +103,7 @@
             btnDelete.TabIndex = 4;
             btnDelete.Text = "☠️ Delete";
             btnDelete.UseVisualStyleBackColor = false;
-            btnDelete.Click += button2_Click;
+            btnDelete.Click += btnDelete_Click;
             // 
             // btnCopy
             // 
@@ -109,6 +114,7 @@
             btnCopy.TabIndex = 5;
             btnCopy.Text = "📄 Copy";
             btnCopy.UseVisualStyleBackColor = true;
+            btnCopy.Click += btnCopy_Click;
             // 
             // btnMove
             // 
@@ -119,6 +125,7 @@
             btnMove.TabIndex = 6;
             btnMove.Text = "📦 Move";
             btnMove.UseVisualStyleBackColor = true;
+            btnMove.Click += btnMove_Click;
             // 
             // btnZip
             // 
@@ -129,6 +136,7 @@
             btnZip.TabIndex = 7;
             btnZip.Text = "🗜️ Zip";
             btnZip.UseVisualStyleBackColor = true;
+            btnZip.Click += btnZip_Click;
             // 
             // btnUnzip
             // 
@@ -139,6 +147,18 @@
             btnUnzip.TabIndex = 8;
             btnUnzip.Text = "📂 Unzip";
             btnUnzip.UseVisualStyleBackColor = true;
+            btnUnzip.Click += btnUnzip_Click;
+            // 
+            // panel1
+            // 
+            panel1.Controls.Add(txtSearch);
+            panel1.Controls.Add(btnSearch);
+            panel1.Dock = DockStyle.Top;
+            panel1.Location = new Point(226, 0);
+            panel1.Name = "panel1";
+            panel1.Size = new Size(896, 35);
+            panel1.TabIndex = 9;
+            panel1.Paint += panel1_Paint;
             // 
             // Form1
             // 
@@ -147,22 +167,22 @@
             BackColor = Color.FromArgb(92, 64, 51);
             BackgroundImage = (Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = ImageLayout.Stretch;
-            ClientSize = new Size(1122, 699);
+            ClientSize = new Size(1122, 625);
+            Controls.Add(panel1);
             Controls.Add(btnUnzip);
             Controls.Add(btnZip);
             Controls.Add(btnMove);
             Controls.Add(btnCopy);
             Controls.Add(btnDelete);
-            Controls.Add(button1);
-            Controls.Add(textBox1);
             Controls.Add(listView1);
             Controls.Add(treeView1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Name = "Form1";
             Text = "Treasurer";
             Load += Form1_Load;
+            panel1.ResumeLayout(false);
+            panel1.PerformLayout();
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
@@ -170,12 +190,13 @@
         private TreeView treeView1;
         private ListView listView1;
         private ColumnHeader columnHeader1;
-        private TextBox textBox1;
-        private Button button1;
+        private TextBox txtSearch;
+        private Button btnSearch;
         private Button btnDelete;
         private Button btnCopy;
         private Button btnMove;
         private Button btnZip;
         private Button btnUnzip;
+        private Panel panel1;
     }
 }
