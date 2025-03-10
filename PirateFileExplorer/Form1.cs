@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -139,7 +139,7 @@ namespace PirateFileExplorer
         // ----------------------------------------------------------------
         // 3. SEARCH FILES (with closest match filtering)
         // ----------------------------------------------------------------
-        private void btnSearch_Click(object sender, EventArgs e)
+        private async void btnSearch_Click(object sender, EventArgs e)
         {
             if (treeView1.SelectedNode == null)
             {
@@ -159,10 +159,49 @@ namespace PirateFileExplorer
             listView1.Items.Clear();
             extIconCache.Clear();
 
+            btnSearch.Enabled = false;
+            btnSearch.Text = "Searching...";
+
             try
             {
-                var files = Directory.GetFiles(currentPath, "*", SearchOption.TopDirectoryOnly);
                 var matchedFiles = new List<Tuple<string, int>>();
+
+                await Task.Run(() => SearchFilesSafe(currentPath, query, matchedFiles));
+
+                listView1.Invoke((MethodInvoker)delegate
+                {
+                    foreach (var tuple in matchedFiles.OrderBy(t => t.Item2))
+                    {
+                        string file = tuple.Item1;
+                        ListViewItem item = new ListViewItem(Path.GetFileName(file), GetFileIconIndex(file))
+                        {
+                            Tag = file
+                        };
+                        listView1.Items.Add(item);
+                    }
+
+                    if (matchedFiles.Count == 0)
+                    {
+                        MessageBox.Show("No files found matching your search.");
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error during search: {ex.Message}");
+            }
+            finally
+            {
+                btnSearch.Enabled = true;
+                btnSearch.Text = "Search";
+            }
+        }
+
+        private void SearchFilesSafe(string directory, string query, List<Tuple<string, int>> matchedFiles)
+        {
+            try
+            {
+                var files = Directory.GetFiles(directory, "*", SearchOption.TopDirectoryOnly);
 
                 foreach (var file in files)
                 {
@@ -174,28 +213,26 @@ namespace PirateFileExplorer
                     }
                 }
 
-                var ordered = matchedFiles.OrderBy(t => t.Item2).ToList();
-
-                foreach (var tuple in ordered)
+                foreach (var subDir in Directory.GetDirectories(directory))
                 {
-                    string file = tuple.Item1;
-                    ListViewItem item = new ListViewItem(Path.GetFileName(file), GetFileIconIndex(file));
-                    item.Tag = file;
-                    listView1.Items.Add(item);
-                }
-
-                if (ordered.Count == 0)
-                {
-                    MessageBox.Show("No files found matching your search.");
+                    try
+                    {
+                        SearchFilesSafe(subDir, query, matchedFiles);
+                    }
+                    catch (UnauthorizedAccessException) { }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Skipping folder {subDir}: {ex.Message}");
+                    }
                 }
             }
+            catch (UnauthorizedAccessException) { }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error during search: {ex.Message}");
+                Console.WriteLine($"Error in directory {directory}: {ex.Message}");
             }
         }
 
-        // Helper method to compute Levenshtein distance
         private int LevenshteinDistance(string s, string t)
         {
             if (string.IsNullOrEmpty(s))
@@ -485,57 +522,86 @@ namespace PirateFileExplorer
         // ----------------------------------------------------------------
         // 7. HELPER METHODS: FOLDER SIZE, FORMAT BYTES, GET FILE ICON
         // ----------------------------------------------------------------
+
         private long GetFolderSize(string folderPath)
         {
             long size = 0;
             try
             {
-                foreach (string file in Directory.GetFiles(folderPath))
+                foreach (string file in Directory.EnumerateFiles(folderPath)) // ✅ Faster than GetFiles()
                 {
                     try
                     {
                         FileInfo info = new FileInfo(file);
                         size += info.Length;
                     }
-                    catch { }
+                    catch (UnauthorizedAccessException) { } // ✅ Ignore restricted files
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error getting file size: {ex.Message}");
+                    }
                 }
-                foreach (string dir in Directory.GetDirectories(folderPath))
+
+                foreach (string dir in Directory.EnumerateDirectories(folderPath)) // ✅ Faster than GetDirectories()
                 {
-                    size += GetFolderSize(dir);
+                    try
+                    {
+                        size += GetFolderSize(dir);
+                    }
+                    catch (UnauthorizedAccessException) { } // ✅ Ignore restricted folders
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error getting folder size: {ex.Message}");
+                    }
                 }
             }
-            catch { }
+            catch (UnauthorizedAccessException) { } // ✅ Ignore root access restrictions
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetFolderSize: {ex.Message}");
+            }
             return size;
         }
 
         private string FormatBytes(long bytes)
         {
-            if (bytes >= 1073741824)
-                return $"{bytes / 1073741824.0:F2} GB";
-            if (bytes >= 1048576)
-                return $"{bytes / 1048576.0:F2} MB";
-            if (bytes >= 1024)
-                return $"{bytes / 1024.0:F2} KB";
+            if (bytes >= 1_073_741_824) // ✅ 1 GB = 1_073_741_824 bytes
+                return $"{bytes / 1_073_741_824.0:F2} GB";
+            if (bytes >= 1_048_576) // ✅ 1 MB = 1_048_576 bytes
+                return $"{bytes / 1_048_576.0:F2} MB";
+            if (bytes >= 1_024) // ✅ 1 KB = 1_024 bytes
+                return $"{bytes / 1_024.0:F2} KB";
             return $"{bytes} bytes";
         }
 
-        // Retrieves the icon index for a file or folder using caching.
+        // ✅ Retrieves the icon index for a file or folder using caching.
         private int GetFileIconIndex(string path)
         {
-            // Check if path is a folder.
+            if (imageList1 == null) // ✅ Ensure imageList1 is initialized
+                imageList1 = new ImageList() { ImageSize = new Size(32, 32) };
+
+            // ✅ 1. Check if it's a folder
             if (Directory.Exists(path))
             {
                 if (!extIconCache.ContainsKey("folder"))
                 {
-                    // Use a placeholder folder icon; you can replace this with a custom icon.
-                    imageList1.Images.Add(SystemIcons.WinLogo);
-                    extIconCache["folder"] = imageList1.Images.Count - 1;
+                    try
+                    {
+                        // ✅ Replace with a real folder icon
+                        Icon folderIcon = SystemIcons.Application; // 🔹 Change to custom folder icon if needed
+                        imageList1.Images.Add(folderIcon.ToBitmap());
+                        extIconCache["folder"] = imageList1.Images.Count - 1;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error loading folder icon: {ex.Message}");
+                    }
                 }
                 return extIconCache["folder"];
             }
 
-            // Otherwise, it's a file. Use its extension as the key.
-            string ext = Path.GetExtension(path);
+            // ✅ 2. Handle file extensions
+            string ext = Path.GetExtension(path).ToLower();
             if (extIconCache.ContainsKey(ext))
             {
                 return extIconCache[ext];
@@ -547,17 +613,21 @@ namespace PirateFileExplorer
                     Icon icon = Icon.ExtractAssociatedIcon(path);
                     if (icon != null)
                     {
-                        Bitmap bmp = icon.ToBitmap();
-                        imageList1.Images.Add(bmp);
+                        imageList1.Images.Add(icon.ToBitmap());
                         int index = imageList1.Images.Count - 1;
                         extIconCache[ext] = index;
                         return index;
                     }
                 }
-                catch { }
-                return -1; // Return -1 if extraction fails.
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error extracting file icon: {ex.Message}");
+                }
             }
+
+            return -1; // 🔹 Return -1 if no icon is found
         }
+
 
         // ----------------------------------------------------------------
         // LISTVIEW DOUBLE-CLICK EVENT: OPEN FOLDER OR FILE
