@@ -4,6 +4,9 @@ using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -11,40 +14,44 @@ namespace PirateFileExplorer
 {
     public partial class Form1 : Form
     {
-        // ImageList for file icons
+        // ImageList за файловите икони
         private ImageList imageList1;
-        // Cache to store file extension to ImageList index mapping
+        // Кеш за съответствието между файловото разширение и индекса в ImageList
         private Dictionary<string, int> extIconCache = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        // Current directory tracker for navigation and search
+        // Текуща директория за навигация и търсене
         private string currentDirectory = "";
 
+        // NOTE: Controls such as treeView1, listView1, txtSearch, btnEncrypt, btnDecrypt must be added via the designer.
         public Form1()
         {
             InitializeComponent();
             InitializeImageList();
             LoadDrives();
 
-            // Subscribe to drag-and-drop events for TreeView and ListView
+            // Абониране за drag-and-drop събития за TreeView и ListView
             treeView1.ItemDrag += treeView1_ItemDrag;
             listView1.DragEnter += listView1_DragEnter;
             listView1.DragDrop += listView1_DragDrop;
 
-            // Subscribe to the double-click event for ListView
+            // Абониране за двойно щракване в ListView
             listView1.DoubleClick += listView1_DoubleClick;
+
+            // Абониране за събитията на бутоните за криптиране и декриптиране
+            btnEncrypt.Click += btnEncrypt_Click;
+            btnDecrypt.Click += btnDecrypt_Click;
         }
 
         // ----------------------------------------------------------------
-        // INITIALIZATION METHODS
+        // МЕТОД ЗА ИНИЦИАЛИЗАЦИЯ НА IMAGE LIST
         // ----------------------------------------------------------------
         private void InitializeImageList()
         {
-            imageList1 = new ImageList();
-            imageList1.ImageSize = new Size(32, 32);
+            imageList1 = new ImageList { ImageSize = new Size(32, 32) };
             listView1.SmallImageList = imageList1;
         }
 
         // ----------------------------------------------------------------
-        // 1. LOAD DRIVES + TREEVIEW FOLDER SIZE
+        // 1. Зареждане на устройства и дървовидната структура на папките с размер
         // ----------------------------------------------------------------
         private void LoadDrives()
         {
@@ -55,7 +62,7 @@ namespace PirateFileExplorer
                 {
                     if (drive.IsReady)
                     {
-                        // Create a node for each drive (e.g., "C:\")
+                        // Създаване на възел за всяко устройство (например "C:\")
                         TreeNode node = new TreeNode(drive.Name) { Tag = drive.Name };
                         node.Nodes.Add("Loading...");
                         treeView1.Nodes.Add(node);
@@ -78,12 +85,12 @@ namespace PirateFileExplorer
                 string[] dirs = Directory.GetDirectories(path);
                 foreach (string dir in dirs)
                 {
-                    // Create a node with temporary text
+                    // Създаване на възел с временен текст
                     TreeNode node = new TreeNode($"{Path.GetFileName(dir)} (Calculating...)") { Tag = dir };
-                    node.Nodes.Add("Loading...");  // Dummy node for further expansion
+                    node.Nodes.Add("Loading...");  // Временен възел за разширяване
                     e.Node.Nodes.Add(node);
 
-                    // Calculate folder size asynchronously to keep UI responsive
+                    // Асинхронно изчисляване на размера на папката за отзивчивост на UI
                     long folderSize = await Task.Run(() => GetFolderSize(dir));
                     string sizeText = FormatBytes(folderSize);
                     node.Text = $"{Path.GetFileName(dir)} ({sizeText})";
@@ -102,17 +109,17 @@ namespace PirateFileExplorer
         }
 
         // ----------------------------------------------------------------
-        // 2. LOAD FILES AND FOLDERS IN LISTVIEW
+        // 2. Зареждане на файлове и папки в ListView
         // ----------------------------------------------------------------
         private void LoadFiles(string path)
         {
             listView1.Items.Clear();
-            extIconCache.Clear(); // Optionally clear cache when loading a new folder
-            currentDirectory = path; // Update current directory
+            extIconCache.Clear(); // Изчистване на кеша при зареждане на нова папка
+            currentDirectory = path; // Актуализиране на текущата директория
 
             try
             {
-                // Load folders first
+                // Зареждане първо на папките
                 foreach (var dir in Directory.GetDirectories(path))
                 {
                     ListViewItem item = new ListViewItem(Path.GetFileName(dir), GetFileIconIndex(dir));
@@ -120,7 +127,7 @@ namespace PirateFileExplorer
                     item.SubItems.Add("Folder");
                     listView1.Items.Add(item);
                 }
-                // Load files
+                // Зареждане на файловете
                 foreach (var file in Directory.GetFiles(path))
                 {
                     FileInfo fi = new FileInfo(file);
@@ -137,7 +144,7 @@ namespace PirateFileExplorer
         }
 
         // ----------------------------------------------------------------
-        // 3. SEARCH FILES (with closest match filtering)
+        // 3. Търсене на файлове (с филтриране според най-близко съвпадение)
         // ----------------------------------------------------------------
         private async void btnSearch_Click(object sender, EventArgs e)
         {
@@ -165,7 +172,6 @@ namespace PirateFileExplorer
             try
             {
                 var matchedFiles = new List<Tuple<string, int>>();
-
                 await Task.Run(() => SearchFilesSafe(currentPath, query, matchedFiles));
 
                 listView1.Invoke((MethodInvoker)delegate
@@ -241,7 +247,6 @@ namespace PirateFileExplorer
                 return s.Length;
 
             int[,] d = new int[s.Length + 1, t.Length + 1];
-
             for (int i = 0; i <= s.Length; i++)
                 d[i, 0] = i;
             for (int j = 0; j <= t.Length; j++)
@@ -259,7 +264,7 @@ namespace PirateFileExplorer
         }
 
         // ----------------------------------------------------------------
-        // 4. FILE OPERATIONS (DELETE, COPY, MOVE, ZIP, UNZIP)
+        // 4. Файлови операции (Delete, Copy, Move, Zip, Unzip)
         // ----------------------------------------------------------------
         private List<string> GetSelectedFiles()
         {
@@ -274,13 +279,13 @@ namespace PirateFileExplorer
         private void btnDelete_Click(object sender, EventArgs e)
         {
             var filesToDelete = GetSelectedFiles();
-            if (filesToDelete.Count == 0) return;
+            if (filesToDelete.Count == 0)
+                return;
 
             DialogResult dialog = MessageBox.Show("Are you sure you want to delete these files?",
                                                   "Confirm Delete",
                                                   MessageBoxButtons.YesNo,
                                                   MessageBoxIcon.Warning);
-
             if (dialog == DialogResult.Yes)
             {
                 foreach (var file in filesToDelete)
@@ -302,7 +307,8 @@ namespace PirateFileExplorer
         private void btnCopy_Click(object sender, EventArgs e)
         {
             var filesToCopy = GetSelectedFiles();
-            if (filesToCopy.Count == 0) return;
+            if (filesToCopy.Count == 0)
+                return;
 
             using (FolderBrowserDialog fbd = new FolderBrowserDialog())
             {
@@ -330,7 +336,8 @@ namespace PirateFileExplorer
         private void btnMove_Click(object sender, EventArgs e)
         {
             var filesToMove = GetSelectedFiles();
-            if (filesToMove.Count == 0) return;
+            if (filesToMove.Count == 0)
+                return;
 
             using (FolderBrowserDialog fbd = new FolderBrowserDialog())
             {
@@ -360,7 +367,8 @@ namespace PirateFileExplorer
         private void btnZip_Click(object sender, EventArgs e)
         {
             var filesToZip = GetSelectedFiles();
-            if (filesToZip.Count == 0) return;
+            if (filesToZip.Count == 0)
+                return;
 
             using (SaveFileDialog sfd = new SaveFileDialog())
             {
@@ -392,7 +400,8 @@ namespace PirateFileExplorer
         private void btnUnzip_Click(object sender, EventArgs e)
         {
             var filesToUnzip = GetSelectedFiles();
-            if (filesToUnzip.Count == 0) return;
+            if (filesToUnzip.Count == 0)
+                return;
 
             using (FolderBrowserDialog fbd = new FolderBrowserDialog())
             {
@@ -421,7 +430,7 @@ namespace PirateFileExplorer
         }
 
         // ----------------------------------------------------------------
-        // 5. CONTEXT MENU: OPEN, PROPERTIES, RENAME
+        // 5. Контекстно меню: Open, Properties, Rename
         // ----------------------------------------------------------------
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -430,7 +439,7 @@ namespace PirateFileExplorer
                 string filePath = listView1.SelectedItems[0].Tag.ToString();
                 if (File.Exists(filePath))
                 {
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                     {
                         FileName = filePath,
                         UseShellExecute = true
@@ -444,7 +453,7 @@ namespace PirateFileExplorer
             if (listView1.SelectedItems.Count > 0)
             {
                 string filePath = listView1.SelectedItems[0].Tag.ToString();
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
                     FileName = filePath,
                     Verb = "properties",
@@ -461,7 +470,6 @@ namespace PirateFileExplorer
                 string oldName = Path.GetFileName(oldPath);
 
                 string newName = Microsoft.VisualBasic.Interaction.InputBox("Enter new file name:", "Rename", oldName);
-
                 if (!string.IsNullOrWhiteSpace(newName) && newName != oldName)
                 {
                     string newPath = Path.Combine(Path.GetDirectoryName(oldPath), newName);
@@ -480,7 +488,7 @@ namespace PirateFileExplorer
         }
 
         // ----------------------------------------------------------------
-        // 6. DRAG & DROP: FROM TREEVIEW TO LISTVIEW (Load Folder Contents)
+        // 6. Drag & Drop: От TreeView към ListView (Зареждане на съдържанието на папка)
         // ----------------------------------------------------------------
         private void treeView1_ItemDrag(object sender, ItemDragEventArgs e)
         {
@@ -494,10 +502,7 @@ namespace PirateFileExplorer
 
         private void listView1_DragEnter(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-                e.Effect = DragDropEffects.Copy;
-            else
-                e.Effect = DragDropEffects.None;
+            e.Effect = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
         }
 
         private void listView1_DragDrop(object sender, DragEventArgs e)
@@ -520,42 +525,40 @@ namespace PirateFileExplorer
         }
 
         // ----------------------------------------------------------------
-        // 7. HELPER METHODS: FOLDER SIZE, FORMAT BYTES, GET FILE ICON
+        // 7. Помощни методи: GetFolderSize, FormatBytes, Get File/Folder Icon
         // ----------------------------------------------------------------
-
         private long GetFolderSize(string folderPath)
         {
             long size = 0;
             try
             {
-                foreach (string file in Directory.EnumerateFiles(folderPath)) // ✅ Faster than GetFiles()
+                foreach (string file in Directory.EnumerateFiles(folderPath))
                 {
                     try
                     {
                         FileInfo info = new FileInfo(file);
                         size += info.Length;
                     }
-                    catch (UnauthorizedAccessException) { } // ✅ Ignore restricted files
+                    catch (UnauthorizedAccessException) { }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Error getting file size: {ex.Message}");
                     }
                 }
-
-                foreach (string dir in Directory.EnumerateDirectories(folderPath)) // ✅ Faster than GetDirectories()
+                foreach (string dir in Directory.EnumerateDirectories(folderPath))
                 {
                     try
                     {
                         size += GetFolderSize(dir);
                     }
-                    catch (UnauthorizedAccessException) { } // ✅ Ignore restricted folders
+                    catch (UnauthorizedAccessException) { }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Error getting folder size: {ex.Message}");
                     }
                 }
             }
-            catch (UnauthorizedAccessException) { } // ✅ Ignore root access restrictions
+            catch (UnauthorizedAccessException) { }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in GetFolderSize: {ex.Message}");
@@ -565,30 +568,30 @@ namespace PirateFileExplorer
 
         private string FormatBytes(long bytes)
         {
-            if (bytes >= 1_073_741_824) // ✅ 1 GB = 1_073_741_824 bytes
+            if (bytes >= 1_073_741_824)
                 return $"{bytes / 1_073_741_824.0:F2} GB";
-            if (bytes >= 1_048_576) // ✅ 1 MB = 1_048_576 bytes
+            if (bytes >= 1_048_576)
                 return $"{bytes / 1_048_576.0:F2} MB";
-            if (bytes >= 1_024) // ✅ 1 KB = 1_024 bytes
+            if (bytes >= 1_024)
                 return $"{bytes / 1_024.0:F2} KB";
             return $"{bytes} bytes";
         }
 
-        // ✅ Retrieves the icon index for a file or folder using caching.
+        // Метод за получаване на индекс на икона за файл или папка с кеширане
         private int GetFileIconIndex(string path)
         {
-            if (imageList1 == null) // ✅ Ensure imageList1 is initialized
+            if (imageList1 == null)
                 imageList1 = new ImageList() { ImageSize = new Size(32, 32) };
 
-            // ✅ 1. Check if it's a folder
+            // Ако е папка
             if (Directory.Exists(path))
             {
                 if (!extIconCache.ContainsKey("folder"))
                 {
                     try
                     {
-                        // ✅ Replace with a real folder icon
-                        Icon folderIcon = SystemIcons.Application; // 🔹 Change to custom folder icon if needed
+                        // Извличане на икона за папка чрез SHGetFileInfo
+                        Icon folderIcon = GetFolderIcon(path);
                         imageList1.Images.Add(folderIcon.ToBitmap());
                         extIconCache["folder"] = imageList1.Images.Count - 1;
                     }
@@ -600,7 +603,7 @@ namespace PirateFileExplorer
                 return extIconCache["folder"];
             }
 
-            // ✅ 2. Handle file extensions
+            // Ако е файл – обработка на разширението
             string ext = Path.GetExtension(path).ToLower();
             if (extIconCache.ContainsKey(ext))
             {
@@ -624,13 +627,48 @@ namespace PirateFileExplorer
                     Console.WriteLine($"Error extracting file icon: {ex.Message}");
                 }
             }
-
-            return -1; // 🔹 Return -1 if no icon is found
+            return -1;
         }
 
+        // Метод за извличане на икона за папка чрез SHGetFileInfo
+        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr SHGetFileInfo(
+            string pszPath,
+            uint dwFileAttributes,
+            ref SHFILEINFO psfi,
+            uint cbFileInfo,
+            uint uFlags);
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        private struct SHFILEINFO
+        {
+            public IntPtr hIcon;
+            public int iIcon;
+            public uint dwAttributes;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+            public string szDisplayName;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
+            public string szTypeName;
+        }
+
+        private const uint SHGFI_ICON = 0x000000100;
+        private const uint SHGFI_SMALLICON = 0x000000001;
+        private const uint SHGFI_USEFILEATTRIBUTES = 0x000000010;
+        private const uint FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
+
+        private Icon GetFolderIcon(string folderPath)
+        {
+            SHFILEINFO shfi = new SHFILEINFO();
+            IntPtr retVal = SHGetFileInfo(folderPath, FILE_ATTRIBUTE_DIRECTORY, ref shfi, (uint)Marshal.SizeOf(shfi), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES);
+            if (retVal != IntPtr.Zero)
+            {
+                return Icon.FromHandle(shfi.hIcon);
+            }
+            return SystemIcons.WinLogo; // Връща стандартна икона, ако не е намерена друга
+        }
 
         // ----------------------------------------------------------------
-        // LISTVIEW DOUBLE-CLICK EVENT: OPEN FOLDER OR FILE
+        // 8. Двойно щракване в ListView: Отваряне на папка или файл
         // ----------------------------------------------------------------
         private void listView1_DoubleClick(object sender, EventArgs e)
         {
@@ -639,13 +677,13 @@ namespace PirateFileExplorer
                 string selectedPath = listView1.SelectedItems[0].Tag.ToString();
                 if (Directory.Exists(selectedPath))
                 {
-                    // If a folder is double-clicked, load its contents.
+                    // Ако е папка, зареждане на съдържанието ѝ
                     LoadFiles(selectedPath);
                 }
                 else if (File.Exists(selectedPath))
                 {
-                    // If a file is double-clicked, open it with its default application.
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
+                    // Ако е файл, отваряне с подразбиращото се приложение
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                     {
                         FileName = selectedPath,
                         UseShellExecute = true
@@ -655,18 +693,18 @@ namespace PirateFileExplorer
         }
 
         // ----------------------------------------------------------------
-        // FORM EVENTS (Placeholders for additional handling)
+        // 9. Събития на формата (допълнителна обработка, ако е необходимо)
         // ----------------------------------------------------------------
         private void Form1_Load(object sender, EventArgs e)
         {
-            // Any additional initialization
+            // Допълнителна инициализация, ако е необходимо
         }
         private void txtSearch_TextChanged(object sender, EventArgs e) { }
         private void listView1_SelectedIndexChanged(object sender, EventArgs e) { }
         private void panel1_Paint(object sender, PaintEventArgs e) { }
 
         // ----------------------------------------------------------------
-        // OPTIONAL: Button to select files (if needed)
+        // ОПЦИОНАЛНО: Бутон за избиране на файлове (ако е необходимо)
         // ----------------------------------------------------------------
         private void btnSelectFile_Click(object sender, EventArgs e)
         {
@@ -682,6 +720,115 @@ namespace PirateFileExplorer
                     {
                         MessageBox.Show($"File Selected: {file}");
                     }
+                }
+            }
+        }
+
+        // ----------------------------------------------------------------
+        // 10. Криптиране и декриптиране
+        // ----------------------------------------------------------------
+
+        // Събитие за криптиране (requires btnEncrypt and txtPassword on the form)
+        private void btnEncrypt_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Please select a file to encrypt.");
+                return;
+            }
+            if (string.IsNullOrEmpty(txtPassword.Text))
+            {
+                MessageBox.Show("Please enter a password.");
+                return;
+            }
+            string inputFile = listView1.SelectedItems[0].Tag.ToString();
+            string outputFile = inputFile + ".enc";
+            try
+            {
+                EncryptFile(inputFile, outputFile, txtPassword.Text);
+                MessageBox.Show("File encrypted successfully:\n" + outputFile);
+                if (treeView1.SelectedNode != null)
+                    LoadFiles(treeView1.SelectedNode.Tag.ToString());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Encryption error: " + ex.Message);
+            }
+        }
+
+        // Събитие за декриптиране (requires btnDecrypt and txtPassword on the form)
+        private void btnDecrypt_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Please select a file to decrypt.");
+                return;
+            }
+            if (string.IsNullOrEmpty(txtPassword.Text))
+            {
+                MessageBox.Show("Please enter a password.");
+                return;
+            }
+            string inputFile = listView1.SelectedItems[0].Tag.ToString();
+            string outputFile = inputFile.EndsWith(".enc") ? inputFile.Substring(0, inputFile.Length - 4) : inputFile + ".dec";
+            try
+            {
+                DecryptFile(inputFile, outputFile, txtPassword.Text);
+                MessageBox.Show("File decrypted successfully:\n" + outputFile);
+                if (treeView1.SelectedNode != null)
+                    LoadFiles(treeView1.SelectedNode.Tag.ToString());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Decryption error: " + ex.Message);
+            }
+        }
+
+        // Метод за генериране на ключ от парола (с помощта на SHA256)
+        private byte[] GetKey(string password)
+        {
+            using (SHA256 sha = SHA256.Create())
+            {
+                return sha.ComputeHash(Encoding.UTF8.GetBytes(password));
+            }
+        }
+
+        // Метод за криптиране на файл с AES
+        private void EncryptFile(string inputFile, string outputFile, string password)
+        {
+            byte[] key = GetKey(password);
+            using (FileStream fsOutput = new FileStream(outputFile, FileMode.Create))
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = key;
+                aes.GenerateIV();
+                // Записване на IV в началото на изходния файл
+                fsOutput.Write(aes.IV, 0, aes.IV.Length);
+                using (CryptoStream cs = new CryptoStream(fsOutput, aes.CreateEncryptor(), CryptoStreamMode.Write))
+                using (FileStream fsInput = new FileStream(inputFile, FileMode.Open))
+                {
+                    fsInput.CopyTo(cs);
+                }
+            }
+        }
+
+        // Метод за декриптиране на файл с AES
+        private void DecryptFile(string inputFile, string outputFile, string password)
+        {
+            byte[] key = GetKey(password);
+            using (FileStream fsInput = new FileStream(inputFile, FileMode.Open))
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = key;
+                byte[] iv = new byte[aes.BlockSize / 8];
+                int bytesRead = fsInput.Read(iv, 0, iv.Length);
+                if (bytesRead < iv.Length)
+                    throw new Exception("Invalid file format");
+                aes.IV = iv;
+                using (CryptoStream cs = new CryptoStream(fsInput, aes.CreateDecryptor(), CryptoStreamMode.Read))
+                using (FileStream fsOutput = new FileStream(outputFile, FileMode.Create))
+                {
+                    cs.CopyTo(fsOutput);
                 }
             }
         }

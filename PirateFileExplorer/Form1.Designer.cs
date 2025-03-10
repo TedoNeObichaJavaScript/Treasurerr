@@ -40,7 +40,10 @@
             btnZip = new Button();
             btnUnzip = new Button();
             panel1 = new Panel();
+            btnDecrypt = new Button();
+            btnEncrypt = new Button();
             btnSelectFile = new Button();
+            txtPassword = new TextBox();
             panel1.SuspendLayout();
             SuspendLayout();
             // 
@@ -76,7 +79,7 @@
             // txtSearch
             // 
             txtSearch.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            txtSearch.Location = new Point(830, 5);
+            txtSearch.Location = new Point(820, 5);
             txtSearch.Name = "txtSearch";
             txtSearch.PlaceholderText = "Search for files..";
             txtSearch.Size = new Size(346, 24);
@@ -152,6 +155,8 @@
             // 
             // panel1
             // 
+            panel1.Controls.Add(btnDecrypt);
+            panel1.Controls.Add(btnEncrypt);
             panel1.Controls.Add(btnSelectFile);
             panel1.Controls.Add(txtSearch);
             panel1.Controls.Add(btnUnzip);
@@ -167,6 +172,24 @@
             panel1.TabIndex = 9;
             panel1.Paint += panel1_Paint;
             // 
+            // btnDecrypt
+            // 
+            btnDecrypt.Location = new Point(566, 4);
+            btnDecrypt.Name = "btnDecrypt";
+            btnDecrypt.Size = new Size(75, 23);
+            btnDecrypt.TabIndex = 11;
+            btnDecrypt.Text = "Decrypt";
+            btnDecrypt.UseVisualStyleBackColor = true;
+            // 
+            // btnEncrypt
+            // 
+            btnEncrypt.Location = new Point(485, 4);
+            btnEncrypt.Name = "btnEncrypt";
+            btnEncrypt.Size = new Size(75, 23);
+            btnEncrypt.TabIndex = 10;
+            btnEncrypt.Text = "Encrypt";
+            btnEncrypt.UseVisualStyleBackColor = true;
+            // 
             // btnSelectFile
             // 
             btnSelectFile.Location = new Point(3, 4);
@@ -177,6 +200,13 @@
             btnSelectFile.UseVisualStyleBackColor = true;
             btnSelectFile.Click += btnSelectFile_Click;
             // 
+            // txtPassword
+            // 
+            txtPassword.Location = new Point(912, 169);
+            txtPassword.Name = "txtPassword";
+            txtPassword.Size = new Size(100, 23);
+            txtPassword.TabIndex = 10;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -185,6 +215,7 @@
             BackgroundImage = (Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = ImageLayout.Stretch;
             ClientSize = new Size(1258, 676);
+            Controls.Add(txtPassword);
             Controls.Add(panel1);
             Controls.Add(listView1);
             Controls.Add(treeView1);
@@ -195,6 +226,7 @@
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -211,5 +243,8 @@
         private Button btnUnzip;
         private Panel panel1;
         private Button btnSelectFile;
+        private Button btnDecrypt;
+        private Button btnEncrypt;
+        private TextBox txtPassword;
     }
 }
