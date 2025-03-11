@@ -40,6 +40,8 @@
             btnZip = new Button();
             btnUnzip = new Button();
             panel1 = new Panel();
+            btnRefresh = new Button();
+            btnRename = new Button();
             btnDecrypt = new Button();
             btnEncrypt = new Button();
             btnSelectFile = new Button();
@@ -155,6 +157,8 @@
             // 
             // panel1
             // 
+            panel1.Controls.Add(btnRefresh);
+            panel1.Controls.Add(btnRename);
             panel1.Controls.Add(btnDecrypt);
             panel1.Controls.Add(btnEncrypt);
             panel1.Controls.Add(btnSelectFile);
@@ -172,6 +176,26 @@
             panel1.TabIndex = 9;
             panel1.Paint += panel1_Paint;
             // 
+            // btnRefresh
+            // 
+            btnRefresh.Location = new Point(728, 5);
+            btnRefresh.Name = "btnRefresh";
+            btnRefresh.Size = new Size(75, 23);
+            btnRefresh.TabIndex = 13;
+            btnRefresh.Text = "Refresh";
+            btnRefresh.UseVisualStyleBackColor = true;
+            btnRefresh.Click += btnRefresh_Click;
+            // 
+            // btnRename
+            // 
+            btnRename.Location = new Point(647, 5);
+            btnRename.Name = "btnRename";
+            btnRename.Size = new Size(75, 23);
+            btnRename.TabIndex = 12;
+            btnRename.Text = "Rename";
+            btnRename.UseVisualStyleBackColor = true;
+            btnRename.Click += btnRename_Click;
+            // 
             // btnDecrypt
             // 
             btnDecrypt.Location = new Point(566, 4);
@@ -180,6 +204,7 @@
             btnDecrypt.TabIndex = 11;
             btnDecrypt.Text = "Decrypt";
             btnDecrypt.UseVisualStyleBackColor = true;
+            btnDecrypt.Click += btnDecrypt_Click;
             // 
             // btnEncrypt
             // 
@@ -189,6 +214,7 @@
             btnEncrypt.TabIndex = 10;
             btnEncrypt.Text = "Encrypt";
             btnEncrypt.UseVisualStyleBackColor = true;
+            btnEncrypt.Click += btnEncrypt_Click;
             // 
             // btnSelectFile
             // 
@@ -202,10 +228,11 @@
             // 
             // txtPassword
             // 
-            txtPassword.Location = new Point(912, 169);
+            txtPassword.Location = new Point(385, 619);
             txtPassword.Name = "txtPassword";
-            txtPassword.Size = new Size(100, 23);
+            txtPassword.Size = new Size(324, 23);
             txtPassword.TabIndex = 10;
+            txtPassword.Text = "Encryption/Decryption Password";
             // 
             // Form1
             // 
@@ -246,5 +273,7 @@
         private Button btnDecrypt;
         private Button btnEncrypt;
         private TextBox txtPassword;
+        private Button btnRefresh;
+        private Button btnRename;
     }
 }

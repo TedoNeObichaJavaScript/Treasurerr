@@ -724,11 +724,9 @@ namespace PirateFileExplorer
             }
         }
 
-        // ----------------------------------------------------------------
-        // 10. Криптиране и декриптиране
-        // ----------------------------------------------------------------
-
-        // Събитие за криптиране (requires btnEncrypt and txtPassword on the form)
+        // -------------------------
+        // Encryption Button Click
+        // -------------------------
         private void btnEncrypt_Click(object sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0)
@@ -736,19 +734,21 @@ namespace PirateFileExplorer
                 MessageBox.Show("Please select a file to encrypt.");
                 return;
             }
-            if (string.IsNullOrEmpty(txtPassword.Text))
+            if (string.IsNullOrWhiteSpace(txtPassword.Text))
             {
-                MessageBox.Show("Please enter a password.");
+                MessageBox.Show("Encryption failed: Password is required.");
                 return;
             }
+
             string inputFile = listView1.SelectedItems[0].Tag.ToString();
             string outputFile = inputFile + ".enc";
+
             try
             {
                 EncryptFile(inputFile, outputFile, txtPassword.Text);
                 MessageBox.Show("File encrypted successfully:\n" + outputFile);
-                if (treeView1.SelectedNode != null)
-                    LoadFiles(treeView1.SelectedNode.Tag.ToString());
+
+                btnRefresh.PerformClick(); // Refresh the file list
             }
             catch (Exception ex)
             {
@@ -756,7 +756,9 @@ namespace PirateFileExplorer
             }
         }
 
-        // Събитие за декриптиране (requires btnDecrypt and txtPassword on the form)
+        // -------------------------
+        // Decryption Button Click
+        // -------------------------
         private void btnDecrypt_Click(object sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0)
@@ -764,19 +766,21 @@ namespace PirateFileExplorer
                 MessageBox.Show("Please select a file to decrypt.");
                 return;
             }
-            if (string.IsNullOrEmpty(txtPassword.Text))
+            if (string.IsNullOrWhiteSpace(txtPassword.Text))
             {
-                MessageBox.Show("Please enter a password.");
+                MessageBox.Show("Decryption failed: Password is required.");
                 return;
             }
+
             string inputFile = listView1.SelectedItems[0].Tag.ToString();
             string outputFile = inputFile.EndsWith(".enc") ? inputFile.Substring(0, inputFile.Length - 4) : inputFile + ".dec";
+
             try
             {
                 DecryptFile(inputFile, outputFile, txtPassword.Text);
                 MessageBox.Show("File decrypted successfully:\n" + outputFile);
-                if (treeView1.SelectedNode != null)
-                    LoadFiles(treeView1.SelectedNode.Tag.ToString());
+
+                btnRefresh.PerformClick(); // Refresh the file list
             }
             catch (Exception ex)
             {
@@ -784,26 +788,36 @@ namespace PirateFileExplorer
             }
         }
 
-        // Метод за генериране на ключ от парола (с помощта на SHA256)
+        // -------------------------
+        // Generate Key from Password (Ensures Password is Required)
+        // -------------------------
         private byte[] GetKey(string password)
         {
+            if (string.IsNullOrEmpty(password))
+            {
+                throw new ArgumentException("Password is required for encryption/decryption.");
+            }
+
             using (SHA256 sha = SHA256.Create())
             {
                 return sha.ComputeHash(Encoding.UTF8.GetBytes(password));
             }
         }
 
-        // Метод за криптиране на файл с AES
+        // -------------------------
+        // Encrypt File with AES
+        // -------------------------
         private void EncryptFile(string inputFile, string outputFile, string password)
         {
             byte[] key = GetKey(password);
+
             using (FileStream fsOutput = new FileStream(outputFile, FileMode.Create))
             using (Aes aes = Aes.Create())
             {
                 aes.Key = key;
                 aes.GenerateIV();
-                // Записване на IV в началото на изходния файл
                 fsOutput.Write(aes.IV, 0, aes.IV.Length);
+
                 using (CryptoStream cs = new CryptoStream(fsOutput, aes.CreateEncryptor(), CryptoStreamMode.Write))
                 using (FileStream fsInput = new FileStream(inputFile, FileMode.Open))
                 {
@@ -812,25 +826,108 @@ namespace PirateFileExplorer
             }
         }
 
-        // Метод за декриптиране на файл с AES
+        // -------------------------
+        // Fixed Decryption Method (Ensures Password is Required)
+        // -------------------------
         private void DecryptFile(string inputFile, string outputFile, string password)
         {
             byte[] key = GetKey(password);
+
             using (FileStream fsInput = new FileStream(inputFile, FileMode.Open))
             using (Aes aes = Aes.Create())
             {
                 aes.Key = key;
+
+                // Read IV from file
                 byte[] iv = new byte[aes.BlockSize / 8];
                 int bytesRead = fsInput.Read(iv, 0, iv.Length);
                 if (bytesRead < iv.Length)
-                    throw new Exception("Invalid file format");
-                aes.IV = iv;
-                using (CryptoStream cs = new CryptoStream(fsInput, aes.CreateDecryptor(), CryptoStreamMode.Read))
-                using (FileStream fsOutput = new FileStream(outputFile, FileMode.Create))
                 {
-                    cs.CopyTo(fsOutput);
+                    MessageBox.Show("Invalid encrypted file: IV is missing or corrupted.");
+                    return;
+                }
+                aes.IV = iv;
+
+                try
+                {
+                    using (CryptoStream cs = new CryptoStream(fsInput, aes.CreateDecryptor(), CryptoStreamMode.Read))
+                    using (FileStream fsOutput = new FileStream(outputFile, FileMode.Create))
+                    {
+                        cs.CopyTo(fsOutput);
+                    }
+                    MessageBox.Show("File decrypted successfully.");
+                }
+                catch (CryptographicException)
+                {
+                    MessageBox.Show("Incorrect password or corrupted file.");
                 }
             }
         }
+
+        private void btnRename_Click(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Please select a file to rename.");
+                return;
+            }
+
+            string oldPath = listView1.SelectedItems[0].Tag.ToString();
+            if (!File.Exists(oldPath))
+            {
+                MessageBox.Show("The selected file does not exist.");
+                return;
+            }
+
+            string oldName = Path.GetFileName(oldPath);
+            string newName = Microsoft.VisualBasic.Interaction.InputBox("Enter new file name:", "Rename", oldName);
+            if (string.IsNullOrWhiteSpace(newName) || newName == oldName)
+            {
+                MessageBox.Show("Invalid new name.");
+                return;
+            }
+
+            string newPath = Path.Combine(Path.GetDirectoryName(oldPath), newName);
+            if (File.Exists(newPath))
+            {
+                MessageBox.Show("A file with this name already exists.");
+                return;
+            }
+
+            try
+            {
+                File.Move(oldPath, newPath);
+                // Update the selected ListViewItem to reflect the new file name and path.
+                ListViewItem selectedItem = listView1.SelectedItems[0];
+                selectedItem.Text = newName;
+                selectedItem.Tag = newPath;
+                MessageBox.Show("File renamed successfully.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error renaming file: {ex.Message}");
+            }
+        }
+
+
+        // -------------------------
+        // Fixed Refresh Button Logic (btnRefresh)
+        // -------------------------
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode != null)
+            {
+                LoadFiles(treeView1.SelectedNode.Tag.ToString());
+            }
+        }
+
+        private void RefreshFileList()
+        {
+            if (!string.IsNullOrEmpty(currentDirectory) && Directory.Exists(currentDirectory))
+            {
+                LoadFiles(currentDirectory);
+            }
+        }
+
     }
 }
