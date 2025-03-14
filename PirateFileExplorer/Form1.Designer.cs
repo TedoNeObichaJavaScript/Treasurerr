@@ -40,11 +40,8 @@
             btnZip = new Button();
             btnUnzip = new Button();
             panel1 = new Panel();
-            btnRefresh = new Button();
             btnRename = new Button();
-            btnDecrypt = new Button();
             btnEncrypt = new Button();
-            btnSelectFile = new Button();
             txtPassword = new TextBox();
             panel1.SuspendLayout();
             SuspendLayout();
@@ -103,7 +100,7 @@
             // 
             btnDelete.BackColor = Color.Transparent;
             btnDelete.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnDelete.Location = new Point(242, 4);
+            btnDelete.Location = new Point(174, 6);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(75, 23);
             btnDelete.TabIndex = 4;
@@ -114,7 +111,7 @@
             // btnCopy
             // 
             btnCopy.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnCopy.Location = new Point(161, 4);
+            btnCopy.Location = new Point(93, 6);
             btnCopy.Name = "btnCopy";
             btnCopy.Size = new Size(75, 23);
             btnCopy.TabIndex = 5;
@@ -125,7 +122,7 @@
             // btnMove
             // 
             btnMove.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnMove.Location = new Point(80, 4);
+            btnMove.Location = new Point(12, 6);
             btnMove.Name = "btnMove";
             btnMove.Size = new Size(75, 23);
             btnMove.TabIndex = 6;
@@ -136,7 +133,7 @@
             // btnZip
             // 
             btnZip.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnZip.Location = new Point(323, 4);
+            btnZip.Location = new Point(255, 6);
             btnZip.Name = "btnZip";
             btnZip.Size = new Size(75, 23);
             btnZip.TabIndex = 7;
@@ -147,7 +144,7 @@
             // btnUnzip
             // 
             btnUnzip.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnUnzip.Location = new Point(404, 4);
+            btnUnzip.Location = new Point(336, 6);
             btnUnzip.Name = "btnUnzip";
             btnUnzip.Size = new Size(75, 23);
             btnUnzip.TabIndex = 8;
@@ -157,11 +154,8 @@
             // 
             // panel1
             // 
-            panel1.Controls.Add(btnRefresh);
             panel1.Controls.Add(btnRename);
-            panel1.Controls.Add(btnDecrypt);
             panel1.Controls.Add(btnEncrypt);
-            panel1.Controls.Add(btnSelectFile);
             panel1.Controls.Add(txtSearch);
             panel1.Controls.Add(btnUnzip);
             panel1.Controls.Add(btnSearch);
@@ -176,55 +170,25 @@
             panel1.TabIndex = 9;
             panel1.Paint += panel1_Paint;
             // 
-            // btnRefresh
-            // 
-            btnRefresh.Location = new Point(728, 5);
-            btnRefresh.Name = "btnRefresh";
-            btnRefresh.Size = new Size(75, 23);
-            btnRefresh.TabIndex = 13;
-            btnRefresh.Text = "Refresh";
-            btnRefresh.UseVisualStyleBackColor = true;
-            btnRefresh.Click += btnRefresh_Click;
-            // 
             // btnRename
             // 
-            btnRename.Location = new Point(647, 5);
+            btnRename.Location = new Point(498, 6);
             btnRename.Name = "btnRename";
             btnRename.Size = new Size(75, 23);
             btnRename.TabIndex = 12;
-            btnRename.Text = "Rename";
+            btnRename.Text = "✏️ Rename";
             btnRename.UseVisualStyleBackColor = true;
             btnRename.Click += btnRename_Click;
             // 
-            // btnDecrypt
-            // 
-            btnDecrypt.Location = new Point(566, 4);
-            btnDecrypt.Name = "btnDecrypt";
-            btnDecrypt.Size = new Size(75, 23);
-            btnDecrypt.TabIndex = 11;
-            btnDecrypt.Text = "Decrypt";
-            btnDecrypt.UseVisualStyleBackColor = true;
-            btnDecrypt.Click += btnDecrypt_Click;
-            // 
             // btnEncrypt
             // 
-            btnEncrypt.Location = new Point(485, 4);
+            btnEncrypt.Location = new Point(417, 6);
             btnEncrypt.Name = "btnEncrypt";
             btnEncrypt.Size = new Size(75, 23);
             btnEncrypt.TabIndex = 10;
-            btnEncrypt.Text = "Encrypt";
+            btnEncrypt.Text = "🔒 Encrypt";
             btnEncrypt.UseVisualStyleBackColor = true;
             btnEncrypt.Click += btnEncrypt_Click;
-            // 
-            // btnSelectFile
-            // 
-            btnSelectFile.Location = new Point(3, 4);
-            btnSelectFile.Name = "btnSelectFile";
-            btnSelectFile.Size = new Size(75, 23);
-            btnSelectFile.TabIndex = 9;
-            btnSelectFile.Text = "Select File";
-            btnSelectFile.UseVisualStyleBackColor = true;
-            btnSelectFile.Click += btnSelectFile_Click;
             // 
             // txtPassword
             // 
@@ -232,7 +196,7 @@
             txtPassword.Name = "txtPassword";
             txtPassword.Size = new Size(324, 23);
             txtPassword.TabIndex = 10;
-            txtPassword.Text = "Encryption/Decryption Password";
+            txtPassword.Text = "Encryption/Password";
             // 
             // Form1
             // 
@@ -269,11 +233,8 @@
         private Button btnZip;
         private Button btnUnzip;
         private Panel panel1;
-        private Button btnSelectFile;
-        private Button btnDecrypt;
         private Button btnEncrypt;
         private TextBox txtPassword;
-        private Button btnRefresh;
         private Button btnRename;
     }
 }

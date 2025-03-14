@@ -38,7 +38,7 @@ namespace PirateFileExplorer
 
             // Абониране за събитията на бутоните за криптиране и декриптиране
             btnEncrypt.Click += btnEncrypt_Click;
-            btnDecrypt.Click += btnDecrypt_Click;
+           
         }
 
         // ----------------------------------------------------------------
@@ -697,7 +697,7 @@ namespace PirateFileExplorer
         // ----------------------------------------------------------------
         private void Form1_Load(object sender, EventArgs e)
         {
-            // Допълнителна инициализация, ако е необходимо
+           
         }
         private void txtSearch_TextChanged(object sender, EventArgs e) { }
         private void listView1_SelectedIndexChanged(object sender, EventArgs e) { }
@@ -734,9 +734,11 @@ namespace PirateFileExplorer
                 MessageBox.Show("Please select a file to encrypt.");
                 return;
             }
-            if (string.IsNullOrWhiteSpace(txtPassword.Text))
+
+            string password = txtPassword.Text.Trim();
+            if (string.IsNullOrEmpty(password))
             {
-                MessageBox.Show("Encryption failed: Password is required.");
+                MessageBox.Show("Encryption failed: A valid password is required.");
                 return;
             }
 
@@ -745,10 +747,8 @@ namespace PirateFileExplorer
 
             try
             {
-                EncryptFile(inputFile, outputFile, txtPassword.Text);
+                EncryptFile(inputFile, outputFile, password);
                 MessageBox.Show("File encrypted successfully:\n" + outputFile);
-
-                btnRefresh.PerformClick(); // Refresh the file list
             }
             catch (Exception ex)
             {
@@ -757,43 +757,11 @@ namespace PirateFileExplorer
         }
 
         // -------------------------
-        // Decryption Button Click
-        // -------------------------
-        private void btnDecrypt_Click(object sender, EventArgs e)
-        {
-            if (listView1.SelectedItems.Count == 0)
-            {
-                MessageBox.Show("Please select a file to decrypt.");
-                return;
-            }
-            if (string.IsNullOrWhiteSpace(txtPassword.Text))
-            {
-                MessageBox.Show("Decryption failed: Password is required.");
-                return;
-            }
-
-            string inputFile = listView1.SelectedItems[0].Tag.ToString();
-            string outputFile = inputFile.EndsWith(".enc") ? inputFile.Substring(0, inputFile.Length - 4) : inputFile + ".dec";
-
-            try
-            {
-                DecryptFile(inputFile, outputFile, txtPassword.Text);
-                MessageBox.Show("File decrypted successfully:\n" + outputFile);
-
-                btnRefresh.PerformClick(); // Refresh the file list
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Decryption error: " + ex.Message);
-            }
-        }
-
-        // -------------------------
         // Generate Key from Password (Ensures Password is Required)
         // -------------------------
         private byte[] GetKey(string password)
         {
-            if (string.IsNullOrEmpty(password))
+            if (string.IsNullOrWhiteSpace(password))  // Added extra check
             {
                 throw new ArgumentException("Password is required for encryption/decryption.");
             }
@@ -822,44 +790,6 @@ namespace PirateFileExplorer
                 using (FileStream fsInput = new FileStream(inputFile, FileMode.Open))
                 {
                     fsInput.CopyTo(cs);
-                }
-            }
-        }
-
-        // -------------------------
-        // Fixed Decryption Method (Ensures Password is Required)
-        // -------------------------
-        private void DecryptFile(string inputFile, string outputFile, string password)
-        {
-            byte[] key = GetKey(password);
-
-            using (FileStream fsInput = new FileStream(inputFile, FileMode.Open))
-            using (Aes aes = Aes.Create())
-            {
-                aes.Key = key;
-
-                // Read IV from file
-                byte[] iv = new byte[aes.BlockSize / 8];
-                int bytesRead = fsInput.Read(iv, 0, iv.Length);
-                if (bytesRead < iv.Length)
-                {
-                    MessageBox.Show("Invalid encrypted file: IV is missing or corrupted.");
-                    return;
-                }
-                aes.IV = iv;
-
-                try
-                {
-                    using (CryptoStream cs = new CryptoStream(fsInput, aes.CreateDecryptor(), CryptoStreamMode.Read))
-                    using (FileStream fsOutput = new FileStream(outputFile, FileMode.Create))
-                    {
-                        cs.CopyTo(fsOutput);
-                    }
-                    MessageBox.Show("File decrypted successfully.");
-                }
-                catch (CryptographicException)
-                {
-                    MessageBox.Show("Incorrect password or corrupted file.");
                 }
             }
         }
@@ -908,26 +838,5 @@ namespace PirateFileExplorer
                 MessageBox.Show($"Error renaming file: {ex.Message}");
             }
         }
-
-
-        // -------------------------
-        // Fixed Refresh Button Logic (btnRefresh)
-        // -------------------------
-        private void btnRefresh_Click(object sender, EventArgs e)
-        {
-            if (treeView1.SelectedNode != null)
-            {
-                LoadFiles(treeView1.SelectedNode.Tag.ToString());
-            }
-        }
-
-        private void RefreshFileList()
-        {
-            if (!string.IsNullOrEmpty(currentDirectory) && Directory.Exists(currentDirectory))
-            {
-                LoadFiles(currentDirectory);
-            }
-        }
-
     }
 }
