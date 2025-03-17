@@ -14,36 +14,23 @@ namespace PirateFileExplorer
 {
     public partial class Form1 : Form
     {
-        // ImageList за файловите икони
+        
         private ImageList imageList1;
-        // Кеш за съответствието между файловото разширение и индекса в ImageList
+       
         private Dictionary<string, int> extIconCache = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        // Текуща директория за навигация и търсене
+    
         private string currentDirectory = "";
 
-        // NOTE: Controls such as treeView1, listView1, txtSearch, btnEncrypt, btnDecrypt must be added via the designer.
         public Form1()
         {
             InitializeComponent();
             InitializeImageList();
             LoadDrives();
-
-            // Абониране за drag-and-drop събития за TreeView и ListView
             treeView1.ItemDrag += treeView1_ItemDrag;
             listView1.DragEnter += listView1_DragEnter;
             listView1.DragDrop += listView1_DragDrop;
-
-            // Абониране за двойно щракване в ListView
             listView1.DoubleClick += listView1_DoubleClick;
-
-            // Абониране за събитията на бутоните за криптиране и декриптиране
-            btnEncrypt.Click += btnEncrypt_Click;
-           
         }
-
-        // ----------------------------------------------------------------
-        // МЕТОД ЗА ИНИЦИАЛИЗАЦИЯ НА IMAGE LIST
-        // ----------------------------------------------------------------
         private void InitializeImageList()
         {
             imageList1 = new ImageList { ImageSize = new Size(32, 32) };
@@ -724,31 +711,22 @@ namespace PirateFileExplorer
             }
         }
 
-        // -------------------------
-        // Encryption Button Click
-        // -------------------------
+        // Encrypt Button Click
         private void btnEncrypt_Click(object sender, EventArgs e)
         {
+            // Check if a file is selected in the ListView
             if (listView1.SelectedItems.Count == 0)
             {
                 MessageBox.Show("Please select a file to encrypt.");
                 return;
             }
 
-            string password = txtPassword.Text.Trim();
-            if (string.IsNullOrEmpty(password))
-            {
-                MessageBox.Show("Encryption failed: A valid password is required.");
-                return;
-            }
-
-            string inputFile = listView1.SelectedItems[0].Tag.ToString();
-            string outputFile = inputFile + ".enc";
+            string inputFile = listView1.SelectedItems[0].Tag.ToString();  // Get the file path from the selected item
 
             try
             {
-                EncryptFile(inputFile, outputFile, password);
-                MessageBox.Show("File encrypted successfully:\n" + outputFile);
+                EncryptFile(inputFile);  // Encrypt and overwrite the file
+                MessageBox.Show("File encrypted successfully:\n" + inputFile);
             }
             catch (Exception ex)
             {
@@ -756,44 +734,116 @@ namespace PirateFileExplorer
             }
         }
 
-        // -------------------------
-        // Generate Key from Password (Ensures Password is Required)
-        // -------------------------
-        private byte[] GetKey(string password)
+        // Encrypt File with AES (this will overwrite the original file)
+        private void EncryptFile(string inputFile)
         {
-            if (string.IsNullOrWhiteSpace(password))  // Added extra check
+            byte[] fileBytes = File.ReadAllBytes(inputFile);  // Read the file content as bytes
+
+            // Encrypt the content using AES
+            byte[] encryptedBytes = AesEncrypt(fileBytes);
+
+            // Overwrite the original file with the encrypted data
+            File.WriteAllBytes(inputFile, encryptedBytes);  // Save the encrypted content back to the same file
+        }
+
+        // Decrypt Button Click
+        private void btnDecrypt_Click(object sender, EventArgs e)
+        {
+            // Check if a file is selected in the ListView
+            if (listView1.SelectedItems.Count == 0)
             {
-                throw new ArgumentException("Password is required for encryption/decryption.");
+                MessageBox.Show("Please select a file to decrypt.");
+                return;
             }
 
-            using (SHA256 sha = SHA256.Create())
+            string inputFile = listView1.SelectedItems[0].Tag.ToString();  // Get the file path from the selected item
+
+            try
             {
-                return sha.ComputeHash(Encoding.UTF8.GetBytes(password));
+                DecryptFile(inputFile);  // Decrypt and overwrite the file
+                MessageBox.Show("File decrypted successfully:\n" + inputFile);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Decryption error: " + ex.Message);
             }
         }
 
-        // -------------------------
-        // Encrypt File with AES
-        // -------------------------
-        private void EncryptFile(string inputFile, string outputFile, string password)
+        // Decrypt File with AES (this will overwrite the original file)
+        private void DecryptFile(string inputFile)
         {
-            byte[] key = GetKey(password);
+            byte[] encryptedBytes = File.ReadAllBytes(inputFile);  // Read the encrypted file content as bytes
 
-            using (FileStream fsOutput = new FileStream(outputFile, FileMode.Create))
-            using (Aes aes = Aes.Create())
+            // Decrypt the byte array to the original content
+            byte[] decryptedBytes = AesDecrypt(encryptedBytes);
+
+            // Overwrite the original file with the decrypted content
+            File.WriteAllBytes(inputFile, decryptedBytes);  // Save the decrypted content back to the same file
+
+            // Ensure the file system has properly flushed the changes before trying to access the file again
+            System.Threading.Thread.Sleep(500);  // Small delay to ensure file is properly written and available
+        }
+
+        // AES Decryption Logic
+        private byte[] AesDecrypt(byte[] inputBytes)
+        {
+            byte[] keyAndIvBytes = UTF8Encoding.UTF8.GetBytes("tR7nR6wZHGjYMCuV");  // Fixed 16-byte key (128-bit)
+
+            using (Aes aesAlg = Aes.Create())
             {
-                aes.Key = key;
-                aes.GenerateIV();
-                fsOutput.Write(aes.IV, 0, aes.IV.Length);
+                aesAlg.Key = keyAndIvBytes;
 
-                using (CryptoStream cs = new CryptoStream(fsOutput, aes.CreateEncryptor(), CryptoStreamMode.Write))
-                using (FileStream fsInput = new FileStream(inputFile, FileMode.Open))
+                // Extract the IV from the input data (the first 16 bytes in this case, since we use AES with a 128-bit block)
+                byte[] iv = new byte[16];
+                Buffer.BlockCopy(inputBytes, 0, iv, 0, iv.Length);
+
+                aesAlg.IV = iv;  // Set the IV for decryption
+
+                // Extract the actual encrypted data (everything after the IV)
+                byte[] encryptedData = new byte[inputBytes.Length - iv.Length];
+                Buffer.BlockCopy(inputBytes, iv.Length, encryptedData, 0, encryptedData.Length);
+
+                using (MemoryStream msDecrypt = new MemoryStream(encryptedData))
+                using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, aesAlg.CreateDecryptor(), CryptoStreamMode.Read))
+                using (MemoryStream msOutput = new MemoryStream())
                 {
-                    fsInput.CopyTo(cs);
+                    csDecrypt.CopyTo(msOutput);
+                    return msOutput.ToArray();  // Return the decrypted binary data
                 }
             }
         }
 
+        // AES Encryption Logic
+        private byte[] AesEncrypt(byte[] inputBytes)
+        {
+            using (Aes aesAlg = Aes.Create())
+            {
+                aesAlg.Key = UTF8Encoding.UTF8.GetBytes("tR7nR6wZHGjYMCuV");
+
+                // Generate a random IV
+                aesAlg.GenerateIV();
+                byte[] iv = aesAlg.IV;
+
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    // Write the IV to the memory stream first
+                    memoryStream.Write(iv, 0, iv.Length);
+
+                    using (CryptoStream cryptoStream = new CryptoStream(memoryStream, aesAlg.CreateEncryptor(), CryptoStreamMode.Write))
+                    {
+                        cryptoStream.Write(inputBytes, 0, inputBytes.Length);
+                        cryptoStream.FlushFinalBlock();
+                    }
+
+                    return memoryStream.ToArray();  // Return the encrypted data (IV + encrypted binary data)
+                }
+            }
+        }
+
+
+
+
+        // Rename Button
         private void btnRename_Click(object sender, EventArgs e)
         {
             if (listView1.SelectedItems.Count == 0)

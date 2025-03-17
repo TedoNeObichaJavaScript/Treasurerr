@@ -40,9 +40,9 @@
             btnZip = new Button();
             btnUnzip = new Button();
             panel1 = new Panel();
+            btnDecrypt = new Button();
             btnRename = new Button();
             btnEncrypt = new Button();
-            txtPassword = new TextBox();
             panel1.SuspendLayout();
             SuspendLayout();
             // 
@@ -154,6 +154,7 @@
             // 
             // panel1
             // 
+            panel1.Controls.Add(btnDecrypt);
             panel1.Controls.Add(btnRename);
             panel1.Controls.Add(btnEncrypt);
             panel1.Controls.Add(txtSearch);
@@ -169,6 +170,16 @@
             panel1.Size = new Size(1258, 35);
             panel1.TabIndex = 9;
             panel1.Paint += panel1_Paint;
+            // 
+            // btnDecrypt
+            // 
+            btnDecrypt.Location = new Point(579, 6);
+            btnDecrypt.Name = "btnDecrypt";
+            btnDecrypt.Size = new Size(75, 23);
+            btnDecrypt.TabIndex = 13;
+            btnDecrypt.Text = "Decryption";
+            btnDecrypt.UseVisualStyleBackColor = true;
+            btnDecrypt.Click += btnDecrypt_Click;
             // 
             // btnRename
             // 
@@ -190,14 +201,6 @@
             btnEncrypt.UseVisualStyleBackColor = true;
             btnEncrypt.Click += btnEncrypt_Click;
             // 
-            // txtPassword
-            // 
-            txtPassword.Location = new Point(385, 619);
-            txtPassword.Name = "txtPassword";
-            txtPassword.Size = new Size(324, 23);
-            txtPassword.TabIndex = 10;
-            txtPassword.Text = "Encryption/Password";
-            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -206,7 +209,6 @@
             BackgroundImage = (Image)resources.GetObject("$this.BackgroundImage");
             BackgroundImageLayout = ImageLayout.Stretch;
             ClientSize = new Size(1258, 676);
-            Controls.Add(txtPassword);
             Controls.Add(panel1);
             Controls.Add(listView1);
             Controls.Add(treeView1);
@@ -217,7 +219,6 @@
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
@@ -234,7 +235,7 @@
         private Button btnUnzip;
         private Panel panel1;
         private Button btnEncrypt;
-        private TextBox txtPassword;
         private Button btnRename;
+        private Button btnDecrypt;
     }
 }
