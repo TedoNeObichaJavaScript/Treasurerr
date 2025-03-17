@@ -213,6 +213,7 @@
             Controls.Add(listView1);
             Controls.Add(treeView1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
+            Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Form1";
             Text = "Treasurer";
             Load += Form1_Load;

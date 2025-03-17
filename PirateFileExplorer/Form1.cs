@@ -24,7 +24,6 @@ namespace PirateFileExplorer
         public Form1()
         {
             InitializeComponent();
-            this.Icon = new Icon("C:\\Users\\chern\\Desktop\\Нова папка\\Treasurerr\\Resources\\logo.ico");
             InitializeImageList();
             LoadDrives();
             treeView1.ItemDrag += treeView1_ItemDrag;
