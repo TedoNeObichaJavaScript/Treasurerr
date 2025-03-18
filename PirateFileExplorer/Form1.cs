@@ -14,11 +14,11 @@ namespace PirateFileExplorer
 {
     public partial class Form1 : Form
     {
-        
+
         private ImageList imageList1;
-       
+
         private Dictionary<string, int> extIconCache = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-    
+
         private string currentDirectory = "";
 
         public Form1()
@@ -684,7 +684,7 @@ namespace PirateFileExplorer
         // ----------------------------------------------------------------
         private void Form1_Load(object sender, EventArgs e)
         {
-           
+
         }
         private void txtSearch_TextChanged(object sender, EventArgs e) { }
         private void listView1_SelectedIndexChanged(object sender, EventArgs e) { }
@@ -887,6 +887,27 @@ namespace PirateFileExplorer
             {
                 MessageBox.Show($"Error renaming file: {ex.Message}");
             }
+        }
+
+        private void panel3_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnRedirect_Click(object sender, EventArgs e)
+        { 
+            string htmlPath = System.IO.Path.Combine(Application.StartupPath, "index.html");  
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = htmlPath,
+                UseShellExecute = true
+            };
+            System.Diagnostics.Process.Start(psi);
         }
     }
 }

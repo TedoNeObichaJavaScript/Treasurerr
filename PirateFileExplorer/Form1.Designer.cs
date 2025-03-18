@@ -43,28 +43,32 @@
             btnDecrypt = new Button();
             btnRename = new Button();
             btnEncrypt = new Button();
+            panel2 = new Panel();
+            panel3 = new Panel();
+            btnRedirect = new Button();
             panel1.SuspendLayout();
+            panel2.SuspendLayout();
             SuspendLayout();
             // 
             // treeView1
             // 
             treeView1.BackColor = Color.BurlyWood;
-            treeView1.Location = new Point(0, 33);
+            treeView1.Location = new Point(203, 32);
             treeView1.Name = "treeView1";
-            treeView1.Size = new Size(361, 592);
+            treeView1.Size = new Size(280, 641);
             treeView1.TabIndex = 0;
             treeView1.BeforeExpand += treeView1_BeforeExpand;
             treeView1.AfterSelect += treeView1_AfterSelect;
             // 
             // listView1
             // 
-            listView1.BackColor = Color.Bisque;
+            listView1.BackColor = Color.PapayaWhip;
+            listView1.BackgroundImageTiled = true;
             listView1.Columns.AddRange(new ColumnHeader[] { columnHeader1 });
             listView1.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            listView1.GridLines = true;
-            listView1.Location = new Point(385, 41);
+            listView1.Location = new Point(481, 35);
             listView1.Name = "listView1";
-            listView1.Size = new Size(324, 572);
+            listView1.Size = new Size(409, 572);
             listView1.TabIndex = 1;
             listView1.UseCompatibleStateImageBehavior = false;
             listView1.View = View.Details;
@@ -78,17 +82,17 @@
             // txtSearch
             // 
             txtSearch.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            txtSearch.Location = new Point(820, 5);
+            txtSearch.Location = new Point(11, 5);
             txtSearch.Name = "txtSearch";
             txtSearch.PlaceholderText = "Search for files..";
-            txtSearch.Size = new Size(346, 24);
+            txtSearch.Size = new Size(1118, 24);
             txtSearch.TabIndex = 2;
             txtSearch.TextChanged += txtSearch_TextChanged;
             // 
             // btnSearch
             // 
             btnSearch.Font = new Font("Comic Sans MS", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnSearch.Location = new Point(1172, 5);
+            btnSearch.Location = new Point(1125, 5);
             btnSearch.Name = "btnSearch";
             btnSearch.Size = new Size(74, 24);
             btnSearch.TabIndex = 3;
@@ -98,11 +102,13 @@
             // 
             // btnDelete
             // 
-            btnDelete.BackColor = Color.Transparent;
-            btnDelete.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnDelete.Location = new Point(174, 6);
+            btnDelete.BackColor = Color.SandyBrown;
+            btnDelete.FlatAppearance.BorderSize = 0;
+            btnDelete.FlatStyle = FlatStyle.Flat;
+            btnDelete.Font = new Font("Comic Sans MS", 12F, FontStyle.Italic, GraphicsUnit.Point, 204);
+            btnDelete.Location = new Point(3, 60);
             btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(75, 23);
+            btnDelete.Size = new Size(194, 39);
             btnDelete.TabIndex = 4;
             btnDelete.Text = "☠️ Delete";
             btnDelete.UseVisualStyleBackColor = false;
@@ -110,60 +116,66 @@
             // 
             // btnCopy
             // 
-            btnCopy.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnCopy.Location = new Point(93, 6);
+            btnCopy.BackColor = Color.SandyBrown;
+            btnCopy.FlatAppearance.BorderSize = 0;
+            btnCopy.FlatStyle = FlatStyle.Flat;
+            btnCopy.Font = new Font("Comic Sans MS", 12F, FontStyle.Italic, GraphicsUnit.Point, 204);
+            btnCopy.Location = new Point(3, 105);
             btnCopy.Name = "btnCopy";
-            btnCopy.Size = new Size(75, 23);
+            btnCopy.Size = new Size(194, 39);
             btnCopy.TabIndex = 5;
             btnCopy.Text = "📄 Copy";
-            btnCopy.UseVisualStyleBackColor = true;
+            btnCopy.UseVisualStyleBackColor = false;
             btnCopy.Click += btnCopy_Click;
             // 
             // btnMove
             // 
-            btnMove.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnMove.Location = new Point(12, 6);
+            btnMove.BackColor = Color.SandyBrown;
+            btnMove.FlatAppearance.BorderSize = 0;
+            btnMove.FlatStyle = FlatStyle.Flat;
+            btnMove.Font = new Font("Comic Sans MS", 12F, FontStyle.Italic, GraphicsUnit.Point, 204);
+            btnMove.ForeColor = SystemColors.ActiveCaptionText;
+            btnMove.Location = new Point(3, 15);
             btnMove.Name = "btnMove";
-            btnMove.Size = new Size(75, 23);
+            btnMove.Size = new Size(194, 39);
             btnMove.TabIndex = 6;
             btnMove.Text = "📦 Move";
-            btnMove.UseVisualStyleBackColor = true;
+            btnMove.UseVisualStyleBackColor = false;
             btnMove.Click += btnMove_Click;
             // 
             // btnZip
             // 
-            btnZip.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnZip.Location = new Point(255, 6);
+            btnZip.BackColor = Color.SandyBrown;
+            btnZip.FlatAppearance.BorderSize = 0;
+            btnZip.FlatStyle = FlatStyle.Flat;
+            btnZip.Font = new Font("Comic Sans MS", 12F, FontStyle.Italic, GraphicsUnit.Point, 204);
+            btnZip.Location = new Point(3, 195);
             btnZip.Name = "btnZip";
-            btnZip.Size = new Size(75, 23);
+            btnZip.Size = new Size(194, 39);
             btnZip.TabIndex = 7;
             btnZip.Text = "🗜️ Zip";
-            btnZip.UseVisualStyleBackColor = true;
+            btnZip.UseVisualStyleBackColor = false;
             btnZip.Click += btnZip_Click;
             // 
             // btnUnzip
             // 
-            btnUnzip.Font = new Font("Comic Sans MS", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
-            btnUnzip.Location = new Point(336, 6);
+            btnUnzip.BackColor = Color.SandyBrown;
+            btnUnzip.FlatAppearance.BorderSize = 0;
+            btnUnzip.FlatStyle = FlatStyle.Flat;
+            btnUnzip.Font = new Font("Comic Sans MS", 12F, FontStyle.Italic, GraphicsUnit.Point, 204);
+            btnUnzip.Location = new Point(3, 240);
             btnUnzip.Name = "btnUnzip";
-            btnUnzip.Size = new Size(75, 23);
+            btnUnzip.Size = new Size(194, 39);
             btnUnzip.TabIndex = 8;
             btnUnzip.Text = "📂 Unzip";
-            btnUnzip.UseVisualStyleBackColor = true;
+            btnUnzip.UseVisualStyleBackColor = false;
             btnUnzip.Click += btnUnzip_Click;
             // 
             // panel1
             // 
-            panel1.Controls.Add(btnDecrypt);
-            panel1.Controls.Add(btnRename);
-            panel1.Controls.Add(btnEncrypt);
+            panel1.BorderStyle = BorderStyle.FixedSingle;
             panel1.Controls.Add(txtSearch);
-            panel1.Controls.Add(btnUnzip);
             panel1.Controls.Add(btnSearch);
-            panel1.Controls.Add(btnMove);
-            panel1.Controls.Add(btnZip);
-            panel1.Controls.Add(btnCopy);
-            panel1.Controls.Add(btnDelete);
             panel1.Dock = DockStyle.Top;
             panel1.Location = new Point(0, 0);
             panel1.Name = "panel1";
@@ -173,33 +185,88 @@
             // 
             // btnDecrypt
             // 
-            btnDecrypt.Location = new Point(579, 6);
+            btnDecrypt.BackColor = Color.SandyBrown;
+            btnDecrypt.FlatAppearance.BorderSize = 0;
+            btnDecrypt.FlatStyle = FlatStyle.Flat;
+            btnDecrypt.Font = new Font("Comic Sans MS", 12F, FontStyle.Italic, GraphicsUnit.Point, 204);
+            btnDecrypt.Location = new Point(3, 330);
             btnDecrypt.Name = "btnDecrypt";
-            btnDecrypt.Size = new Size(75, 23);
+            btnDecrypt.Size = new Size(194, 39);
             btnDecrypt.TabIndex = 13;
-            btnDecrypt.Text = "Decryption";
-            btnDecrypt.UseVisualStyleBackColor = true;
+            btnDecrypt.Text = "🗝 Decrypt";
+            btnDecrypt.UseVisualStyleBackColor = false;
             btnDecrypt.Click += btnDecrypt_Click;
             // 
             // btnRename
             // 
-            btnRename.Location = new Point(498, 6);
+            btnRename.BackColor = Color.SandyBrown;
+            btnRename.FlatAppearance.BorderSize = 0;
+            btnRename.FlatStyle = FlatStyle.Flat;
+            btnRename.Font = new Font("Comic Sans MS", 12F, FontStyle.Italic, GraphicsUnit.Point, 204);
+            btnRename.Location = new Point(3, 150);
             btnRename.Name = "btnRename";
-            btnRename.Size = new Size(75, 23);
+            btnRename.Size = new Size(194, 39);
             btnRename.TabIndex = 12;
             btnRename.Text = "✏️ Rename";
-            btnRename.UseVisualStyleBackColor = true;
+            btnRename.UseVisualStyleBackColor = false;
             btnRename.Click += btnRename_Click;
             // 
             // btnEncrypt
             // 
-            btnEncrypt.Location = new Point(417, 6);
+            btnEncrypt.BackColor = Color.SandyBrown;
+            btnEncrypt.FlatAppearance.BorderSize = 0;
+            btnEncrypt.FlatStyle = FlatStyle.Flat;
+            btnEncrypt.Font = new Font("Comic Sans MS", 12F, FontStyle.Italic, GraphicsUnit.Point, 204);
+            btnEncrypt.Location = new Point(3, 285);
             btnEncrypt.Name = "btnEncrypt";
-            btnEncrypt.Size = new Size(75, 23);
+            btnEncrypt.Size = new Size(194, 39);
             btnEncrypt.TabIndex = 10;
             btnEncrypt.Text = "🔒 Encrypt";
-            btnEncrypt.UseVisualStyleBackColor = true;
+            btnEncrypt.UseVisualStyleBackColor = false;
             btnEncrypt.Click += btnEncrypt_Click;
+            // 
+            // panel2
+            // 
+            panel2.BackColor = Color.Chocolate;
+            panel2.Controls.Add(btnRedirect);
+            panel2.Controls.Add(panel3);
+            panel2.Controls.Add(btnDecrypt);
+            panel2.Controls.Add(btnMove);
+            panel2.Controls.Add(btnRename);
+            panel2.Controls.Add(btnCopy);
+            panel2.Controls.Add(btnEncrypt);
+            panel2.Controls.Add(btnDelete);
+            panel2.Controls.Add(btnZip);
+            panel2.Controls.Add(btnUnzip);
+            panel2.Dock = DockStyle.Left;
+            panel2.Location = new Point(0, 35);
+            panel2.Name = "panel2";
+            panel2.Size = new Size(205, 641);
+            panel2.TabIndex = 10;
+            // 
+            // panel3
+            // 
+            panel3.BackgroundImage = (Image)resources.GetObject("panel3.BackgroundImage");
+            panel3.BackgroundImageLayout = ImageLayout.Stretch;
+            panel3.Location = new Point(3, 419);
+            panel3.Name = "panel3";
+            panel3.Size = new Size(194, 174);
+            panel3.TabIndex = 11;
+            panel3.Paint += panel3_Paint;
+            // 
+            // btnRedirect
+            // 
+            btnRedirect.BackColor = Color.SandyBrown;
+            btnRedirect.FlatAppearance.BorderSize = 0;
+            btnRedirect.FlatStyle = FlatStyle.Flat;
+            btnRedirect.Font = new Font("Comic Sans MS", 12F, FontStyle.Italic, GraphicsUnit.Point, 204);
+            btnRedirect.Location = new Point(3, 599);
+            btnRedirect.Name = "btnRedirect";
+            btnRedirect.Size = new Size(194, 39);
+            btnRedirect.TabIndex = 11;
+            btnRedirect.Text = "🌐 Treasurerr";
+            btnRedirect.UseVisualStyleBackColor = false;
+            btnRedirect.Click += btnRedirect_Click;
             // 
             // Form1
             // 
@@ -207,8 +274,8 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(92, 64, 51);
             BackgroundImage = (Image)resources.GetObject("$this.BackgroundImage");
-            BackgroundImageLayout = ImageLayout.Stretch;
             ClientSize = new Size(1258, 676);
+            Controls.Add(panel2);
             Controls.Add(panel1);
             Controls.Add(listView1);
             Controls.Add(treeView1);
@@ -219,6 +286,7 @@
             Load += Form1_Load;
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
+            panel2.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -238,5 +306,8 @@
         private Button btnEncrypt;
         private Button btnRename;
         private Button btnDecrypt;
+        private Panel panel2;
+        private Panel panel3;
+        private Button btnRedirect;
     }
 }
