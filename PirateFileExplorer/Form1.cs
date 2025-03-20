@@ -898,7 +898,7 @@ namespace PirateFileExplorer
         {
 
         }
-
+        //btnredirect
         private void btnRedirect_Click(object sender, EventArgs e)
         { 
             string htmlPath = System.IO.Path.Combine(Application.StartupPath, "index.html");  
